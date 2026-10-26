@@ -1,9 +1,5 @@
 node_modules/
 dist/
 *.log
+.env
 .DS_Store
-hogwarts-academy/
-hogwarts-academy.zip
-PDF_TypeScript_TAF_Markdown/
-PDF_TypeScript_TAF_Markdown.zip
-*.pdf
