@@ -1,0 +1,16 @@
+{
+  "name": "hogwarts-academy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hogwarts Academy - Magical School Management System in TypeScript with SOLID principles",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "test": "tsx --test tests/**/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
