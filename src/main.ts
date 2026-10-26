@@ -14,6 +14,8 @@ import type {
   WizardWithStats
 } from "./types/types";
 
+import { isHouse, isWizard } from "./guards/guards";
+
 export function createWizardSummary(wizard: Wizard): WizardSummary {
   return {
     id: wizard.id,
@@ -63,6 +65,22 @@ const sampleWizardStats: WizardWithStats = {
   health: 100
 };
 
+const validData: unknown = {
+  id: 1,
+  name: "Harry Potter",
+  house: "Gryffindor",
+  level: 5,
+  active: true
+};
+
+const invalidData: unknown = {
+  id: 2,
+  name: "Viktor",
+  house: "Durmstrang",
+  level: 5,
+  active: true
+};
+
 type AttackOutput = SpellOutput<"attack">;
 type DefenseOutput = SpellOutput<"defense">;
 type HealingOutput = SpellOutput<"healing">;
@@ -84,3 +102,7 @@ void sampleWizardStats;
 
 console.log(createWizardSummary(sampleWizard));
 console.log(handleSpellCast(sampleEvent));
+console.log(isWizard(validData));
+console.log(isWizard(invalidData));
+console.log(isHouse("Ravenclaw"));
+console.log(isHouse("Durmstrang"));
