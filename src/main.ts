@@ -1,15 +1,62 @@
-import { WizardRepository } from "./repositories/wizard.repository";
-import { SpellRepository } from "./repositories/spell.repository";
-import { isWizard, isHouse } from "./guards/guards";
-import { Cache } from "./decorators/decorators";
-import { WizardCharacter } from "./models/wizard.model";
-import { ProfessorCharacter } from "./models/professor.model";
-import { AttackSpell, DefenseSpell, HealingSpell } from "./models/spell.model";
-import type { Character } from "./models/character.model";
-import type { SpellCastEvent } from "./types/types";
-import { HouseService } from "./services/house.service";
-import { DuelService } from "./services/duel.service";
+import {
+  type Wizard,
+  type Spell,
+  type AcademyEvent,
+  type House,
+  type HousePoints,
+  type SpellCategory,
+  type SpellOutput,
+  type ArrayElement,
+  type WizardSummary,
+  type WizardUpdate,
+  type AttackSpell,
+  type NonHealingCategory,
+  type SpellCastEvent,
+} from "./types";
 
+import { WizardRepository, SpellRepository } from "./repository";
+import { Log, Cache } from "./decorators";
+
+// TAF Exercice 6 - Étape 1 : Créer un type guard dédié à isHouse() (Slide 11)
+const validHouses: readonly House[] = [
+  "Gryffindor",
+  "Slytherin",
+  "Ravenclaw",
+  "Hufflepuff"
+];
+
+function isHouse(value: unknown): value is House {
+  return (
+    typeof value === "string" &&
+    validHouses.some(house => house === value)
+  );
+}
+
+// TAF Exercice 6 - Étape 2 : Mise à jour de la fonction isWizard() (Slide 12)
+function isWizard(value: unknown): value is Wizard {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    typeof candidate.id === "number" &&
+    typeof candidate.name === "string" &&
+    isHouse(candidate.house) &&
+    typeof candidate.level === "number" &&
+    typeof candidate.active === "boolean"
+  );
+}
+
+// TAF Exercice 3 - Étape 2 : Créer un eventHandler (Slide 5)
+function handleSpellCast(event: SpellCastEvent): void {
+  console.log(
+    `Wizard ${event.wizardId} cast ${event.spellName}`
+  );
+}
+
+// TAF Exercice 5 - Étape 2 : Appliquer le décorateur Cache dans SpellCalculator (Slide 10)
 class SpellCalculator {
   @Cache
   calculatePower(basePower: number, multiplier: number): number {
@@ -18,113 +65,186 @@ class SpellCalculator {
   }
 }
 
-function handleSpellCastEvent(event: SpellCastEvent): void {
-  console.log(`[EVENT] Wizard #${event.wizardId} cast spell: ${event.spellName}`);
+class AcademyService {
+  constructor(
+    private readonly wizards: WizardRepository,
+    private readonly spells: SpellRepository
+  ) {}
+
+  @Log
+  castSpell(wizardId: number, spellId: number): string {
+    const wizard = this.wizards.findById(wizardId);
+    const spell = this.spells.findById(spellId);
+
+    if (!wizard || !spell) {
+      throw new Error("Wizard or spell not found");
+    }
+
+    return `${wizard.name} casts ${spell.name}!`;
+  }
+
+  findByHouse(house: House): WizardSummary[] {
+    return this.wizards
+      .getAll()
+      .filter(wizard => wizard.house === house)
+      .map(({ id, name, house }) => ({ id, name, house }));
+  }
+
+  updateWizard(id: number, changes: WizardUpdate): boolean {
+    return this.wizards.update(id, changes);
+  }
+
+  getSpellEvents(events: AcademyEvent[]): Extract<AcademyEvent, { type: "spell-cast" }>[] {
+    return events.filter(
+      (event): event is Extract<AcademyEvent, { type: "spell-cast" }> =>
+        event.type === "spell-cast"
+    );
+  }
 }
 
 const wizards = new WizardRepository();
 const spells = new SpellRepository();
 
-console.log("\n=== TAF Exercises ===");
+console.log("\n========================================");
+console.log("    HOGWARTS ACADEMY — RÉALISATION TAF   ");
+console.log("========================================");
 
-console.log("\n--- Exercise 1: addWizard without id ---");
-const harryData = wizards.addWizard({ name: "Harry Potter", house: "Gryffindor", level: 5, active: true, patronus: "Stag" });
-const hermioneData = wizards.addWizard({ name: "Hermione Granger", house: "Gryffindor", level: 8, active: true });
-const dracoData = wizards.addWizard({ name: "Draco Malfoy", house: "Slytherin", level: 6, active: true });
-console.log("Harry:", harryData.name, "ID:", harryData.id);
-console.log("Hermione:", hermioneData.name, "ID:", hermioneData.id);
-console.log("Draco:", dracoData.name, "ID:", dracoData.id);
+// --- Exercice 1 : Ajouter un nouveau sorcier (Slide 2) ---
+console.log("\n--- Exercice 1 : addWizard avec NewWizard ---");
+const harry = wizards.addWizard({
+  name: "Harry Potter",
+  house: "Gryffindor",
+  level: 5,
+  active: true,
+  patronus: "Stag"
+});
+const hermione = wizards.addWizard({
+  name: "Hermione Granger",
+  house: "Gryffindor",
+  level: 8,
+  active: true
+});
+const draco = wizards.addWizard({
+  name: "Draco Malfoy",
+  house: "Slytherin",
+  level: 6,
+  active: true
+});
+console.log("Harry ajouté avec ID :", harry.id);
+console.log("Hermione ajoutée avec ID :", hermione.id);
+console.log("Draco ajouté avec ID :", draco.id);
 
-console.log("\n--- Exercise 2: findByHouse ---");
+// --- Exercice 2 : Filtrer les sorciers par maison (Slide 3) ---
+console.log("\n--- Exercice 2 : findByHouse avec indexed access type ---");
 const gryffindors = wizards.findByHouse("Gryffindor");
-console.log("Gryffindors:", gryffindors.map(w => w.name));
+console.log("Sorciers de Gryffindor :", gryffindors.map(w => w.name));
 
-console.log("\n--- Exercise 3: Extract SpellCastEvent ---");
-const sampleEvent: SpellCastEvent = {
+// --- Exercice 3 : Événement de lancement de sort (Slides 4 & 5) ---
+console.log("\n--- Exercice 3 : Extract SpellCastEvent & handleSpellCast ---");
+handleSpellCast({
   type: "spell-cast",
   wizardId: 1,
   spellName: "Expelliarmus"
-};
-handleSpellCastEvent(sampleEvent);
+});
 
-console.log("\n--- Exercise 4: ValidateSpellPower ---");
-spells.add({ id: 101, name: "Expelliarmus", category: "attack", power: 80 });
+// --- Exercice 4 : Validation de puissance de sort (Slides 6, 7 & 8) ---
+console.log("\n--- Exercice 4 : ValidateSpellPower sur SpellRepository ---");
+spells.add({
+  id: 102,
+  name: "Protego",
+  category: "defense",
+  power: 50
+});
+
 try {
-  spells.add({ id: 102, name: "Dark Curse", category: "attack", power: -50 });
+  spells.add({
+    id: 103,
+    name: "Invalid Spell",
+    category: "attack",
+    power: -10
+  });
 } catch (error: unknown) {
-  if (error instanceof Error) console.log("Rejected:", error.message);
+  if (error instanceof Error) {
+    console.log("Sort rejeté :", error.message);
+  }
 }
 
-console.log("\n--- Exercise 5: Cache decorator ---");
+// --- Exercice 5 : Décorateur de méthode avec mise en cache (Slides 9 & 10) ---
+console.log("\n--- Exercice 5 : Cache decorator sur SpellCalculator ---");
 const calculator = new SpellCalculator();
 console.log(calculator.calculatePower(10, 3));
 console.log(calculator.calculatePower(10, 3));
+console.log(calculator.calculatePower(5, 2));
 
-console.log("\n--- Exercise 6: Type Guards ---");
-const validData: unknown = { id: 1, name: "Harry Potter", house: "Gryffindor", level: 5, active: true };
-const badData: unknown = { id: 2, name: "Viktor", house: "Durmstrang", level: 5, active: true };
-console.log("isWizard(valid):", isWizard(validData));
-console.log("isWizard(Durmstrang):", isWizard(badData));
-console.log("isHouse(Ravenclaw):", isHouse("Ravenclaw"));
-console.log("isHouse(Durmstrang):", isHouse("Durmstrang"));
+// --- Exercice 6 : Renforcer les Type Guards (Slides 11, 12 & 13) ---
+console.log("\n--- Exercice 6 : Type Guards isHouse() et isWizard() ---");
+const validData: unknown = {
+  id: 1,
+  name: "Harry Potter",
+  house: "Gryffindor",
+  level: 5,
+  active: true
+};
 
-console.log("\n=== OOP Model Demo ===");
+const invalidData: unknown = {
+  id: 2,
+  name: "Viktor",
+  house: "Durmstrang",
+  level: 5,
+  active: true
+};
 
-const expelliarmus = new AttackSpell(1, "Expelliarmus", 40, 20);
-const protego = new DefenseSpell(2, "Protego", 30, 15);
-const episkey = new HealingSpell(3, "Episkey", 25, 10);
+console.log("isWizard(validData) :", isWizard(validData));       // true
+console.log("isWizard(invalidData) :", isWizard(invalidData));   // false
 
-const harry = new WizardCharacter(1, "Harry Potter", "Gryffindor", 5);
-const draco = new WizardCharacter(2, "Draco Malfoy", "Slytherin", 6);
-const mcGonagall = new ProfessorCharacter(1, "Minerva McGonagall", "Gryffindor", 15, "Transfiguration");
+// --- Démonstrations complémentaires du projet initial ---
+console.log("\n--- Démonstrations initiales : AcademyService ---");
+const academy = new AcademyService(wizards, spells);
+spells.add({
+  id: 101,
+  name: "Expelliarmus",
+  category: "attack",
+  power: 80
+});
+console.log(academy.castSpell(1, 101));
 
-console.log("\n--- describe() polymorphism (LSP) ---");
-const characters: Character[] = [harry, draco, mcGonagall];
-characters.forEach(c => console.log(c.describe()));
+academy.updateWizard(1, { level: 6 });
+console.log("Harry mis à jour :", wizards.findById(1));
 
-console.log("\n--- Professor teaches spell ---");
-console.log(mcGonagall.teach(harry, expelliarmus));
-console.log(mcGonagall.teach(harry, protego));
-console.log(mcGonagall.teach(harry, episkey));
-console.log(mcGonagall.teach(draco, expelliarmus));
-console.log("Harry knows:", harry.getLearnedSpells().map(s => s.name));
+const points: HousePoints = {
+  Gryffindor: 100,
+  Slytherin: 80,
+  Ravenclaw: 90,
+  Hufflepuff: 70
+};
+console.log("Points des maisons :", points);
 
-console.log("\n--- Wizard casts spells ---");
-console.log(harry.castSpell(expelliarmus, draco));
-console.log(`Draco HP: ${draco.health}`);
+const events: AcademyEvent[] = [
+  { type: "spell-cast", wizardId: 1, spellName: "Lumos" },
+  { type: "level-up", wizardId: 2, newLevel: 9 },
+  { type: "wizard-expelled", wizardId: 3 }
+];
+console.log("Événements filtrés :", academy.getSpellEvents(events));
 
-console.log(harry.castSpell(episkey, draco));
-console.log(`Harry HP after self-heal: ${harry.health} | Draco HP: ${draco.health}`);
+// Compile-time demonstrations
+type CastArguments = Parameters<AcademyService["castSpell"]>;
+type CastResult = ReturnType<AcademyService["castSpell"]>;
+type AttackOutput = SpellOutput<"attack">;
+type HealingOutput = SpellOutput<"healing">;
+type SpellItem = ArrayElement<Spell[]>;
+type AttackSpellExample = AttackSpell;
+type RemainingCategories = NonHealingCategory;
+type CategoryExample = SpellCategory;
 
-console.log(harry.castSpell(protego, draco));
-console.log(`Harry Mana after 3 spells: ${harry.mana}`);
+const typeExamples: [
+  CastArguments,
+  CastResult,
+  AttackOutput,
+  HealingOutput,
+  SpellItem,
+  AttackSpellExample["category"],
+  RemainingCategories,
+  CategoryExample
+] | null = null;
 
-console.log("\n--- Not enough mana ---");
-const weakWizard = new WizardCharacter(3, "Neville", "Gryffindor", 1, 5);
-try {
-  weakWizard.castSpell(expelliarmus, draco);
-} catch (error: unknown) {
-  if (error instanceof Error) console.log("Error:", error.message);
-}
-
-console.log("\n=== Services Demo (HouseService & DuelService) ===");
-
-const houseService = new HouseService(wizards);
-houseService.awardPoints("Gryffindor", 100);
-houseService.awardPoints("Ravenclaw", 90);
-houseService.awardPoints("Hufflepuff", 80);
-houseService.awardPoints("Slytherin", 95);
-
-console.log("\n--- Leaderboard before duel ---");
-console.table(houseService.getLeaderboard());
-
-const duelService = new DuelService(houseService);
-duelService.onSpellCast(handleSpellCastEvent);
-
-console.log("\n--- Starting Duel: Harry (Gryffindor) vs Draco (Slytherin) ---");
-const [winnerId, loserId] = duelService.duel(harry, draco);
-console.log(`Duel finished! Winner: Wizard #${winnerId}, Loser: Wizard #${loserId}`);
-
-console.log("\n--- Leaderboard after duel (+50 pts to winner's house) ---");
-console.table(houseService.getLeaderboard());
-console.log(`Leading House: ${houseService.getLeadingHouse()}`);
+void typeExamples;

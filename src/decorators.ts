@@ -1,15 +1,30 @@
+/**
+ * Legacy TypeScript method decorator.
+ * Enable "experimentalDecorators": true in tsconfig.json.
+ */
 export function Log(
   target: object,
   propertyKey: string | symbol,
   descriptor: PropertyDescriptor
 ): void {
-  const originalMethod = descriptor.value as (...args: unknown[]) => unknown;
+  const originalMethod = descriptor.value as (
+    ...args: unknown[]
+  ) => unknown;
 
-  descriptor.value = function (this: unknown, ...args: unknown[]): unknown {
-    console.log(`[LOG] ${String(propertyKey)} called with:`, args);
-    const result = originalMethod.apply(this, args);
-    console.log(`[LOG] ${String(propertyKey)} returned:`, result);
-    return result;
+  descriptor.value = function (
+    this: unknown,
+    ...args: unknown[]
+  ): unknown {
+    console.log(`[CALL] ${String(propertyKey)}`, args);
+
+    try {
+      const result = originalMethod.apply(this, args);
+      console.log(`[RETURN] ${String(propertyKey)}`, result);
+      return result;
+    } catch (error: unknown) {
+      console.error(`[ERROR] ${String(propertyKey)}`, error);
+      throw error;
+    }
   };
 }
 
@@ -18,63 +33,74 @@ export function MeasureTime(
   propertyKey: string | symbol,
   descriptor: PropertyDescriptor
 ): void {
-  const originalMethod = descriptor.value as (...args: unknown[]) => unknown;
+  const originalMethod = descriptor.value as (
+    ...args: unknown[]
+  ) => unknown;
 
-  descriptor.value = function (this: unknown, ...args: unknown[]): unknown {
+  descriptor.value = function (
+    this: unknown,
+    ...args: unknown[]
+  ): unknown {
     const start = Date.now();
+
     try {
       return originalMethod.apply(this, args);
     } finally {
-      console.log(`[TIME] ${String(propertyKey)}: ${Date.now() - start}ms`);
+      console.log(
+        `[TIME] ${String(propertyKey)}: ${Date.now() - start} ms`
+      );
     }
   };
 }
 
+// TAF Exercice 4 - Étape 1 : Implémenter ValidateSpellPower
 export function ValidateSpellPower(
   target: object,
   propertyKey: string | symbol,
   descriptor: PropertyDescriptor
 ): void {
-  const originalMethod = descriptor.value as (...args: unknown[]) => unknown;
+  const originalMethod = descriptor.value as (
+    ...args: unknown[]
+  ) => unknown;
 
   descriptor.value = function (this: unknown, ...args: unknown[]): unknown {
-    const candidate = args[0];
+    const candidate: unknown = args[0];
 
-    if (typeof candidate === "object" && candidate !== null && "power" in candidate) {
-      const power = (candidate as Record<string, unknown>)["power"];
-
-      if (typeof power === "number" && power < 0) {
-        throw new Error("Spell power cannot be negative");
-      }
+    if (
+      typeof candidate === "object" &&
+      candidate !== null &&
+      "power" in candidate &&
+      typeof (candidate as Record<string, unknown>).power === "number" &&
+      ((candidate as Record<string, unknown>).power as number) < 0
+    ) {
+      throw new Error("Spell power cannot be negative");
     }
 
     return originalMethod.apply(this, args);
   };
 }
 
+// TAF Exercice 5 - Étape 1 : Mise en place du cache
 export function Cache(
   target: object,
   propertyKey: string | symbol,
   descriptor: PropertyDescriptor
 ): void {
   const originalMethod = descriptor.value as (...args: unknown[]) => unknown;
+
   const instanceCaches = new WeakMap<object, Map<string, unknown>>();
 
   descriptor.value = function (this: object, ...args: unknown[]): unknown {
     let cache = instanceCaches.get(this);
-
     if (!cache) {
       cache = new Map<string, unknown>();
       instanceCaches.set(this, cache);
     }
-
     const key = JSON.stringify(args);
-
     if (cache.has(key)) {
       console.log(`[CACHE HIT] ${String(propertyKey)}`);
       return cache.get(key);
     }
-
     console.log(`[CACHE MISS] ${String(propertyKey)}`);
     const result = originalMethod.apply(this, args);
     cache.set(key, result);

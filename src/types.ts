@@ -10,6 +10,8 @@ export interface Wizard {
   house: House;
   level: number;
   active: boolean;
+
+  // Index signature: dynamic properties must use these value types.
   [key: string]: string | number | boolean;
 }
 
@@ -20,7 +22,6 @@ export interface Spell {
   name: string;
   category: SpellCategory;
   power: number;
-  energyCost?: number;
 }
 
 export type AcademyEvent =
@@ -28,17 +29,21 @@ export type AcademyEvent =
   | { type: "level-up"; wizardId: number; newLevel: number }
   | { type: "wizard-expelled"; wizardId: number };
 
+// TAF Exercice 3 - Étape 1 : Extraire le type d'événement « spell-cast »
 export type SpellCastEvent = Extract<AcademyEvent, { type: "spell-cast" }>;
 
+// Conditional type: choose an output type based on the spell category.
 export type SpellOutput<T extends SpellCategory> =
   T extends "attack" ? number :
   T extends "defense" ? boolean :
   T extends "healing" ? string :
   never;
 
+// infer extracts an array element type.
 export type ArrayElement<T> =
   T extends (infer Item)[] ? Item : never;
 
+// Utility type examples.
 export type NewWizard = Omit<Wizard, "id">;
 export type WizardSummary = Pick<Wizard, "id" | "name" | "house">;
 export type WizardUpdate = Partial<Wizard>;
@@ -46,10 +51,3 @@ export type WizardUpdate = Partial<Wizard>;
 export type AttackSpell = Extract<Spell, { category: "attack" }>;
 export type NonHealingCategory = Exclude<SpellCategory, "healing">;
 export type HousePoints = Record<House, number>;
-
-export type DuelResult = readonly [winnerId: number, loserId: number];
-
-export type WizardWithStats = Wizard & {
-  mana: number;
-  health: number;
-};
