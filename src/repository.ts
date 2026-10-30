@@ -28,16 +28,13 @@ export class Repository<T extends { id: number }> {
   }
 }
 
-// TAF Exercice 1 & 2 : Modification de WizardRepository
 export class WizardRepository extends Repository<Wizard> {
-  // Exercice 2 : Filtrer les sorciers par maison (Slide 3)
   findByHouse(house: Wizard["house"]): Wizard[] {
     return this.getAll().filter(
       wizard => wizard.house === house
     );
   }
 
-  // Exercice 1 : Ajouter un sorcier à l'aide de NewWizard avec attribution automatique d'identifiant (Slides 1 & 2)
   addWizard(data: NewWizard): Wizard {
     const id = this.getAll().length + 1;
     const wizard = { id, ...data } as Wizard;
@@ -46,7 +43,6 @@ export class WizardRepository extends Repository<Wizard> {
   }
 }
 
-// TAF Exercice 4 - Étape 2 : Appliquer ValidateSpellPower au SpellRepository (Slide 7)
 export class SpellRepository extends Repository<Spell> {
   @ValidateSpellPower
   override add(spell: Spell): void {

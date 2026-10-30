@@ -11,7 +11,6 @@ export interface Wizard {
   level: number;
   active: boolean;
 
-  // Index signature: dynamic properties must use these value types.
   [key: string]: string | number | boolean;
 }
 
@@ -29,21 +28,17 @@ export type AcademyEvent =
   | { type: "level-up"; wizardId: number; newLevel: number }
   | { type: "wizard-expelled"; wizardId: number };
 
-// TAF Exercice 3 - Étape 1 : Extraire le type d'événement « spell-cast »
 export type SpellCastEvent = Extract<AcademyEvent, { type: "spell-cast" }>;
 
-// Conditional type: choose an output type based on the spell category.
 export type SpellOutput<T extends SpellCategory> =
   T extends "attack" ? number :
   T extends "defense" ? boolean :
   T extends "healing" ? string :
   never;
 
-// infer extracts an array element type.
 export type ArrayElement<T> =
   T extends (infer Item)[] ? Item : never;
 
-// Utility type examples.
 export type NewWizard = Omit<Wizard, "id">;
 export type WizardSummary = Pick<Wizard, "id" | "name" | "house">;
 export type WizardUpdate = Partial<Wizard>;

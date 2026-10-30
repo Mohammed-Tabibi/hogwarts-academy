@@ -1,12 +1,10 @@
 node_modules/
-dist/
-*.log
-.env
-.DS_Store
 
-# Course PDFs and temporary archives
-*.pdf
-*.zip
-PDF_TypeScript_TAF_Markdown/
-TypeScript_3_PDF_Images/
-hogwarts-academy/
+dist/
+
+*.log
+
+.env
+
+.DS_Store
+Thumbs.db

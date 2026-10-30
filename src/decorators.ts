@@ -1,7 +1,3 @@
-/**
- * Legacy TypeScript method decorator.
- * Enable "experimentalDecorators": true in tsconfig.json.
- */
 export function Log(
   target: object,
   propertyKey: string | symbol,
@@ -53,7 +49,6 @@ export function MeasureTime(
   };
 }
 
-// TAF Exercice 4 - Étape 1 : Implémenter ValidateSpellPower
 export function ValidateSpellPower(
   target: object,
   propertyKey: string | symbol,
@@ -80,7 +75,6 @@ export function ValidateSpellPower(
   };
 }
 
-// TAF Exercice 5 - Étape 1 : Mise en place du cache
 export function Cache(
   target: object,
   propertyKey: string | symbol,

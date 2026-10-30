@@ -17,7 +17,6 @@ import {
 import { WizardRepository, SpellRepository } from "./repository";
 import { Log, Cache } from "./decorators";
 
-// TAF Exercice 6 - Étape 1 : Créer un type guard dédié à isHouse() (Slide 11)
 const validHouses: readonly House[] = [
   "Gryffindor",
   "Slytherin",
@@ -32,7 +31,6 @@ function isHouse(value: unknown): value is House {
   );
 }
 
-// TAF Exercice 6 - Étape 2 : Mise à jour de la fonction isWizard() (Slide 12)
 function isWizard(value: unknown): value is Wizard {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -49,14 +47,12 @@ function isWizard(value: unknown): value is Wizard {
   );
 }
 
-// TAF Exercice 3 - Étape 2 : Créer un eventHandler (Slide 5)
 function handleSpellCast(event: SpellCastEvent): void {
   console.log(
     `Wizard ${event.wizardId} cast ${event.spellName}`
   );
 }
 
-// TAF Exercice 5 - Étape 2 : Appliquer le décorateur Cache dans SpellCalculator (Slide 10)
 class SpellCalculator {
   @Cache
   calculatePower(basePower: number, multiplier: number): number {
@@ -109,7 +105,6 @@ console.log("\n========================================");
 console.log("    HOGWARTS ACADEMY — RÉALISATION TAF   ");
 console.log("========================================");
 
-// --- Exercice 1 : Ajouter un nouveau sorcier (Slide 2) ---
 console.log("\n--- Exercice 1 : addWizard avec NewWizard ---");
 const harry = wizards.addWizard({
   name: "Harry Potter",
@@ -134,12 +129,10 @@ console.log("Harry ajouté avec ID :", harry.id);
 console.log("Hermione ajoutée avec ID :", hermione.id);
 console.log("Draco ajouté avec ID :", draco.id);
 
-// --- Exercice 2 : Filtrer les sorciers par maison (Slide 3) ---
 console.log("\n--- Exercice 2 : findByHouse avec indexed access type ---");
 const gryffindors = wizards.findByHouse("Gryffindor");
 console.log("Sorciers de Gryffindor :", gryffindors.map(w => w.name));
 
-// --- Exercice 3 : Événement de lancement de sort (Slides 4 & 5) ---
 console.log("\n--- Exercice 3 : Extract SpellCastEvent & handleSpellCast ---");
 handleSpellCast({
   type: "spell-cast",
@@ -147,7 +140,6 @@ handleSpellCast({
   spellName: "Expelliarmus"
 });
 
-// --- Exercice 4 : Validation de puissance de sort (Slides 6, 7 & 8) ---
 console.log("\n--- Exercice 4 : ValidateSpellPower sur SpellRepository ---");
 spells.add({
   id: 102,
@@ -169,14 +161,12 @@ try {
   }
 }
 
-// --- Exercice 5 : Décorateur de méthode avec mise en cache (Slides 9 & 10) ---
 console.log("\n--- Exercice 5 : Cache decorator sur SpellCalculator ---");
 const calculator = new SpellCalculator();
 console.log(calculator.calculatePower(10, 3));
 console.log(calculator.calculatePower(10, 3));
 console.log(calculator.calculatePower(5, 2));
 
-// --- Exercice 6 : Renforcer les Type Guards (Slides 11, 12 & 13) ---
 console.log("\n--- Exercice 6 : Type Guards isHouse() et isWizard() ---");
 const validData: unknown = {
   id: 1,
@@ -194,10 +184,9 @@ const invalidData: unknown = {
   active: true
 };
 
-console.log("isWizard(validData) :", isWizard(validData));       // true
-console.log("isWizard(invalidData) :", isWizard(invalidData));   // false
+console.log("isWizard(validData) :", isWizard(validData));
+console.log("isWizard(invalidData) :", isWizard(invalidData));
 
-// --- Démonstrations complémentaires du projet initial ---
 console.log("\n--- Démonstrations initiales : AcademyService ---");
 const academy = new AcademyService(wizards, spells);
 spells.add({
@@ -226,7 +215,6 @@ const events: AcademyEvent[] = [
 ];
 console.log("Événements filtrés :", academy.getSpellEvents(events));
 
-// Compile-time demonstrations
 type CastArguments = Parameters<AcademyService["castSpell"]>;
 type CastResult = ReturnType<AcademyService["castSpell"]>;
 type AttackOutput = SpellOutput<"attack">;
